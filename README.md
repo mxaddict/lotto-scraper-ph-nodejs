@@ -5,7 +5,7 @@
 # Clone the repo
 git clone https://github.com/mxaddict/lotto-scraper-ph-nodejs.git
 
-# Move the the working dir
+# Move to the working dir
 cd lotto-scraper-ph-nodejs
 
 # Install packages
@@ -17,7 +17,7 @@ npm install
 # Move the the working dir
 cd lotto-scraper-ph-nodejs
 
-# Run the npm start command, this should start main.js
+# RUN WITH IT!
 ./run
 ```
 
