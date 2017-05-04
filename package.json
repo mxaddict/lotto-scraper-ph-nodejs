@@ -12,5 +12,9 @@
   "bugs": {
     "url": "https://github.com/mxaddict/lotto-scraper-ph-nodejs/issues"
   },
-  "homepage": "https://github.com/mxaddict/lotto-scraper-ph-nodejs#readme"
+  "homepage": "https://github.com/mxaddict/lotto-scraper-ph-nodejs#readme",
+  "dependencies": {
+    "figlet": "^1.2.0",
+    "js-crawler": "^0.3.19"
+  }
 }
