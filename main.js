@@ -2,7 +2,7 @@
 
 // Load dependencies
 const _figlet   = require('figlet');
-const _crawler  = require("js-crawler");
+const _request  = require('request');
 const _jsdom    = require("jsdom");
 const _fs       = require('fs');
 const { JSDOM } = _jsdom;
@@ -13,10 +13,6 @@ let fig    = (string) =>
   log(_figlet.textSync(string.replace(/ /g, '  ')))
 
 fig("Started the scraper");
-
-// Setup a crawler that only loads one page deep
-let crawler = new _crawler().configure({depth: 1});
-
 log("Instantiated crawler");
 log("Loading results page");
 
@@ -27,15 +23,28 @@ var _results = [];
 let _results_save_path = "./results.json";
 
 // Load the PSCO results page
-crawler.crawl({
-  url: "http://www.pcso.gov.ph/lotto-search/lotto-search.aspx",
-  success: function(page) {
+_request.post(
+  {
+    url:'http://www.pcso.gov.ph/lotto-search/lotto-search.aspx',
+    form: {
+      key:'value'
+    },
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/58.0.3029.81 Chrome/58.0.3029.81 Safari/537.36'
+    }
+  },
+  function(err, httpResponse, body){
+    if (err) {
+      fig("Error");
+      log(err);
+      return;
+    }
     // Page loaded, nice
     log("Results page loaded");
 
     // Parse the document
     log("Parse the document");
-    let document = (new JSDOM(page.body)).window.document;
+    let document = (new JSDOM(body)).window.document;
 
     // Load the results
     log("Parse the result rows");
@@ -57,11 +66,7 @@ crawler.crawl({
     // Save the results
     log("Saving results in " + _results_save_path);
     _fs.writeFileSync(_results_save_path, JSON.stringify(_results, null, 2) , 'utf-8');
-  },
-  failure: function(page) {
-    log('ERROR: ' + page.status + ' | Could not load page');
-  },
-  finished: function() {
+
     fig("Scraper Done");
   }
-});
+);

@@ -15,7 +15,6 @@
   "homepage": "https://github.com/mxaddict/lotto-scraper-ph-nodejs#readme",
   "dependencies": {
     "figlet": "^1.2.0",
-    "js-crawler": "^0.3.19",
     "jsdom": "^10.1.0"
   }
 }
