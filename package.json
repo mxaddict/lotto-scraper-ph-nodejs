@@ -1,0 +1,19 @@
+{
+  "name": "lotto-scraper-ph-nodejs",
+  "version": "1.0.0",
+  "description": "Gets lotto results from PCSO website",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/mxaddict/lotto-scraper-ph-nodejs.git"
+  },
+  "author": "Barry Deeney <mxaddict@codedmaster.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mxaddict/lotto-scraper-ph-nodejs/issues"
+  },
+  "homepage": "https://github.com/mxaddict/lotto-scraper-ph-nodejs#readme"
+}
