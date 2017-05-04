@@ -4,6 +4,7 @@
 const _figlet   = require('figlet');
 const _crawler  = require("js-crawler");
 const _jsdom    = require("jsdom");
+const _fs       = require('fs');
 const { JSDOM } = _jsdom;
 
 // We need an easy way to use the console.log command
@@ -21,6 +22,9 @@ log("Loading results page");
 
 // We need a place to save our results
 var _results = [];
+
+// Where do we save the results
+let _results_save_path = "./results.json";
 
 // Load the PSCO results page
 crawler.crawl({
@@ -50,9 +54,14 @@ crawler.crawl({
       });
     }
 
-    log(_results);
+    // Save the results
+    log("Saving results in " + _results_save_path);
+    _fs.writeFileSync(_results_save_path, JSON.stringify(_results, null, 2) , 'utf-8');
   },
   failure: function(page) {
     log('ERROR: ' + page.status + ' | Could not load page');
+  },
+  finished: function() {
+    fig("Scraper Done");
   }
 });
