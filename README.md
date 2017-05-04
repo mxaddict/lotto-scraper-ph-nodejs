@@ -14,8 +14,11 @@ npm install
 
 ## Running the scraper
 ```shell
+# Move the the working dir
+cd lotto-scraper-ph-nodejs
+
 # Run the npm start command, this should start main.js
-npm start
+./run
 ```
 
 ## Why?
