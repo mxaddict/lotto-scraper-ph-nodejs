@@ -19,7 +19,7 @@ let request_headers = {
   'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/58.0.3029.81 Chrome/58.0.3029.81 Safari/537.36'
 }
 
-fig("Started the scraper");
+fig("LOTTO SCRAPER PH NODEJS");
 log("Loading hidden fields on results page");
 
 // We need a place to save our results
@@ -45,7 +45,7 @@ _request.get(
     var form_data = {};
 
     // Parse the hidden document
-    log("Parse the hidde document");
+    log("Parse the hidden document");
     let hidden_document = (new JSDOM(body)).window.document;
 
     // Load the results
@@ -119,7 +119,7 @@ _request.get(
         log("Saving results in " + _results_save_path);
         _fs.writeFileSync(_results_save_path, JSON.stringify(_results, null, 2) , 'utf-8');
 
-        fig("Scraper Done");
+        fig("DONE");
       }
     );
   }
