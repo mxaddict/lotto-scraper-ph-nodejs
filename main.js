@@ -23,7 +23,7 @@ fig("LOTTO SCRAPER PH NODEJS");
 log("Loading hidden fields on results page");
 
 // We need a place to save our results
-var _results = [];
+var _results = {};
 
 // Where do we save the results
 let _results_save_path = "./results.json";
@@ -58,9 +58,9 @@ _request.get(
     }
 
     // Form data for our main request date filter
-    form_data.ddlStartMonth = 'January';
-    form_data.ddlStartDate  = 1;
-    form_data.ddlStartYear  = 2007;
+    form_data.ddlStartMonth = (new Date).toLocaleString("en-us", { month: "long" });
+    form_data.ddlStartDate  = (new Date).getDate();
+    form_data.ddlStartYear  = ((new Date).getFullYear() - 2);
     form_data.ddlEndMonth   = (new Date).toLocaleString("en-us", { month: "long" });
     form_data.ddlEndDay     = (new Date).getDate();
     form_data.ddlEndYear    = (new Date).getFullYear();
@@ -100,20 +100,46 @@ _request.get(
         let results = document.querySelectorAll('#GridView1 tr td');
         let results_count = results.length / 5;
 
+        // Temp result
+        var _result = {};
+
+        // We need a place to save the count
+        var _results_count = 0;
+
         // Loop the results
         for (var i = 0, len = results_count; i < len; i++) {
+          // Calculate the index
           var x = i * 5;
-          _results.push({
+
+          // Build the temp result object
+          _result = {
             game:    results[x+0].innerHTML,
             result:  results[x+1].innerHTML,
+            ordered: results[x+1].innerHTML.split('-').sort().join('-'),
             date:    results[x+2].innerHTML,
             prize:   results[x+3].innerHTML,
             winners: results[x+4].innerHTML
-          });
+          };
+
+          // Check if we have the game
+          if (_results[_result.game] == undefined) {
+            _results[_result.game] = {};
+          }
+
+          // Check if we have the date
+          if (_results[_result.game][_result.date] == undefined) {
+            _results[_result.game][_result.date] = [];
+          }
+
+          // Save the _result
+          _results[_result.game][_result.date].push(_result);
+
+          // Count this result
+          _results_count++;
         }
 
         // Log some debug counts
-        log("Found " + _results.length + " results");
+        log("Found " + _results_count + " results");
 
         // Save the results
         log("Saving results in " + _results_save_path);
