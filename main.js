@@ -14,7 +14,7 @@ const { table } = require('table')
 const argv = require('yargs')
   .default({
     days: 60,
-    merge: false
+    split: false
   })
   .argv
 
@@ -148,8 +148,8 @@ request.get(
             winners: parseInt(results[x + 4].innerHTML)
           }
 
-          // Check if we wanna merge the time based games?
-          if (argv.merge) {
+          // Check if we wanna split the time based games?
+          if (!argv.split) {
             result.game = result.game.replace(/[\s]+[\d]+[AMP]+/g, '')
           }
 
