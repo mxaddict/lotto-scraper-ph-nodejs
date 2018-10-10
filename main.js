@@ -2,11 +2,10 @@
 
 // Load dependencies
 const _figlet = require('figlet')
-const _request = require('request')
-const _qs = require('querystring')
-const _jsdom = require('jsdom')
-const _fs = require('fs')
-const { JSDOM } = _jsdom
+const request = require('request')
+const qs = require('querystring')
+const { JSDOM } = require('jsdom')
+const sqlite = require('sqlite')
 
 // We need an easy way to use the console.log command
 let log = console.log
@@ -20,26 +19,30 @@ let headers = {
 }
 
 fig('LOTTO SCRAPER PH NODEJS')
+
+log('Create our in memory connection')
+const dbPromise = sqlite.open(':memory:', { Promise })
+
 log('Loading hidden fields on results page')
 
-// We need a place to save our results
-let _results = {}
-
-// Where do we save the results
-let resultSavePath = './results.json'
-
 // Load the first page so that we can get the hidden field
-_request.get(
+request.get(
   {
     url: searchUrl,
     headers: headers
   },
-  function (err, httpResponse, body) {
+  async (err, httpResponse, body) => {
     if (err) {
       fig('Error')
       log(err)
       return
     }
+
+    // Get the database connection
+    let db = await dbPromise
+
+    // Run our migrations
+    db.migrate({ force: true })
 
     // Where to save our fields
     let formData = {}
@@ -48,7 +51,7 @@ _request.get(
     log('Parse the hidden document')
     let hiddenDocument = (new JSDOM(body)).window.document
 
-    // Load the results
+    // Parse the hidden fields
     log('Parse the hidden fields')
     let fields = hiddenDocument.querySelectorAll('form#mainform input[type=hidden]')
 
@@ -68,11 +71,11 @@ _request.get(
     formData['ctl00$ctl00$cphContainer$cpContent$btnSearch'] = 'Search Lotto'
 
     // Build the requestBody
-    let requestBody = _qs.stringify(formData)
+    let requestBody = qs.stringify(formData)
 
     // Load the PSCO results page
     log('Loading results page')
-    _request.post(
+    request.post(
       {
         url: searchUrl,
         body: requestBody,
@@ -82,70 +85,74 @@ _request.get(
           'Content-Type': 'application/x-www-form-urlencoded'
         }
       },
-      function (err, httpResponse, body) {
+      async (err, httpResponse, body) => {
         if (err) {
           fig('Error')
           log(err)
           return
         }
+
         // Page loaded, nice
         log('Results page loaded')
 
         // Parse the document
-        log('Parse the document')
+        log('Parsing the document')
         let document = (new JSDOM(body)).window.document
 
         // Load the results
-        log('Parse the result rows')
+        log('Parsing the result rows')
         let results = document.querySelectorAll('#cphContainer_cpContent_GridView1 tr td')
         let resultsCount = results.length / 5
 
-        // Temp result
-        let _result = {}
-
-        // We need a place to save the count
-        let _resultsCount = 0
+        // Log some debug counts
+        log('Found ' + resultsCount + ' results')
 
         // Loop the results
         for (let i = 0, len = resultsCount; i < len; i++) {
           // Calculate the index
           let x = i * 5
 
-          // Build the temp result object
-          _result = {
+          // Save the result
+          let result = {
             game: results[x + 0].innerHTML,
-            result: results[x + 1].innerHTML,
-            ordered: results[x + 1].innerHTML.split('-').sort().join('-'),
-            date: results[x + 2].innerHTML,
-            prize: results[x + 3].innerHTML,
-            winners: results[x + 4].innerHTML
+            numbers: results[x + 1].innerHTML.split('-').sort().map(s => { return parseInt(s) }),
+            stamp: results[x + 2].innerHTML,
+            prize: parseInt(results[x + 3].innerHTML),
+            winners: parseInt(results[x + 4].innerHTML)
           }
 
-          // Check if we have the game
-          if (_results[_result.game] === undefined) {
-            _results[_result.game] = {}
+          // Add to DB
+          let res = await db.run(
+            'INSERT INTO results ( game, stamp, prize, winners) VALUES ( $game, $stamp, $prize, $winners)',
+            {
+              $game: result.game,
+              $stamp: result.stamp,
+              $prize: result.prize,
+              $winners: result.winners
+            })
+
+          let stmt = await db.prepare('INSERT INTO numbers (result_id, value) VALUES ($result_id, $value)')
+
+          for (let i = 0, len = result.numbers.length; i < len; i++) {
+            stmt.run({
+              $result_id: res.lastID,
+              $value: result.numbers[i]
+            })
           }
 
-          // Check if we have the date
-          if (_results[_result.game][_result.date] === undefined) {
-            _results[_result.game][_result.date] = []
-          }
-
-          // Save the _result
-          _results[_result.game][_result.date].push(_result)
-
-          // Count this result
-          _resultsCount++
+          stmt.finalize()
         }
 
-        // Log some debug counts
-        log('Found ' + _resultsCount + ' results')
+        // Query the number of results in database
+        let res = await db.get('SELECT COUNT(id) AS count FROM results')
 
-        // Save the results
-        log('Saving results in ' + resultSavePath)
-        _fs.writeFileSync(resultSavePath, JSON.stringify(_results, null, 2), 'utf-8')
+        // We got them all!
+        log('Saved ' + res.count + ' results')
 
-        // Loop all the
+        // Query all games
+        let games = await db.all('SELECT game FROM results GROUP BY game')
+
+        log(games)
 
         fig('DONE')
       }
