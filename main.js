@@ -13,7 +13,8 @@ const { table } = require('table')
 // Load our arguments
 const argv = require('yargs')
   .default({
-    days: 60
+    days: 60,
+    merge: false
   })
   .argv
 
@@ -147,6 +148,11 @@ request.get(
             winners: parseInt(results[x + 4].innerHTML)
           }
 
+          // Check if we wanna merge the time based games?
+          if (argv.merge) {
+            result.game = result.game.replace(/[\s]+[\d]+[AMP]+/g, '')
+          }
+
           // Add to DB
           let res = await db.run(
             'INSERT INTO results ( game, numbers, stamp, prize, winners) VALUES ( $game, $numbers, $stamp, $prize, $winners)',
@@ -182,7 +188,9 @@ request.get(
 
         // We need some data for our table
         let rows = [
-          ['Game', 'Least Common', 'Most Common']
+          ['Game', 'Least Common', 'Most Common'].map(str => {
+            return chalk.bold.blue(str)
+          })
         ]
 
         for (let i = 0, len = games.length; i < len; i++) {
@@ -221,8 +229,8 @@ request.get(
           // Add our row
           rows.push([
             chalk.red(game.name),
-            chalk.keyword('orange')(game.least),
-            chalk.keyword('orange')(game.most)
+            chalk.yellow(game.least),
+            chalk.yellow(game.most)
           ])
         }
 
