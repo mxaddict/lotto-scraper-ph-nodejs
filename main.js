@@ -164,16 +164,18 @@ request.get(
               $winners: result.winners
             })
 
-          let stmt = await db.prepare('INSERT INTO numbers (result_id, game, value) VALUES ($result_id, $game, $value)')
+          // make a statement
+          let stmt = await db.prepare('INSERT INTO numbers (result_id, value) VALUES ($result_id, $value)')
 
+          // Loop the numbers
           for (let i = 0, len = result.numbers.length; i < len; i++) {
             stmt.run({
               $result_id: res.lastID,
-              $game: result.game,
               $value: result.numbers[i]
             })
           }
 
+          // PENISH NA!
           stmt.finalize()
         }
 
@@ -199,8 +201,9 @@ request.get(
 
           game.least = (await db.all(
             `
-              SELECT value, COUNT(id) AS count
+              SELECT value, COUNT(numbers.id) AS count
               FROM numbers
+              JOIN results ON results.id = result_id
               WHERE game = ?
               GROUP BY value
               ORDER BY count ASC
@@ -213,8 +216,9 @@ request.get(
           }).join('-')
           game.most = (await db.all(
             `
-              SELECT value, COUNT(id) AS count
+              SELECT value, COUNT(numbers.id) AS count
               FROM numbers
+              JOIN results ON results.id = result_id
               WHERE game = ?
               GROUP BY value
               ORDER BY count DESC
