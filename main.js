@@ -184,7 +184,7 @@ request.get(
         info('Saved ' + res.count + ' results')
 
         // Query all games
-        let games = await db.all('SELECT game AS name, numbers FROM results GROUP BY game')
+        let games = await db.all('SELECT game AS name, numbers FROM results GROUP BY game ORDER BY numbers ASC')
 
         // We need some data for our table
         let rows = [
