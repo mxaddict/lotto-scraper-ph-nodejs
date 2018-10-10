@@ -1,12 +1,14 @@
 CREATE TABLE results (
   id INTEGER PRIMARY KEY,
   game VARCHAR,
+  numbers INTEGER,
   stamp TIMESTAMP,
   prize INTEGER,
   winners INTEGER
 );
 
 CREATE INDEX idx_results_game ON results (game);
+CREATE INDEX idx_results_numbers ON results (numbers);
 CREATE INDEX idx_results_when ON results (stamp);
 CREATE INDEX idx_results_prize ON results (prize);
 CREATE INDEX idx_results_winners ON results (winners);
@@ -14,10 +16,12 @@ CREATE INDEX idx_results_winners ON results (winners);
 CREATE TABLE numbers (
   id INTEGER PRIMARY KEY,
   result_id INTEGER NOT NULL,
+  game VARCHAR,
   value INTEGER,
   FOREIGN KEY (result_id) REFERENCES results (result_id)
 );
 
+CREATE INDEX idx_numbers_game ON numbers (game);
 CREATE INDEX idx_numbers_value ON numbers (value);
 
 -- Down

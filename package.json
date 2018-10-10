@@ -14,9 +14,11 @@
   },
   "homepage": "https://github.com/mxaddict/lotto-scraper-ph-nodejs#readme",
   "dependencies": {
+    "chalk": "^2.4.1",
     "figlet": "^1.2.0",
     "jsdom": "^10.1.0",
     "sql-template-strings": "^2.2.2",
-    "sqlite": "^3.0.0"
+    "sqlite": "^3.0.0",
+    "table": "^5.1.0"
   }
 }

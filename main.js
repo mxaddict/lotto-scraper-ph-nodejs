@@ -1,16 +1,28 @@
 'use strict'
 
 // Load dependencies
-const _figlet = require('figlet')
-const request = require('request')
+const chalk = require('chalk')
+const figlet = require('figlet')
 const qs = require('querystring')
-const { JSDOM } = require('jsdom')
+const request = require('request')
 const sqlite = require('sqlite')
+const { table } = require('table')
+const { JSDOM } = require('jsdom')
 
 // We need an easy way to use the console.log command
 let log = console.log
-let fig = (string) =>
-  log(_figlet.textSync(string.replace(/ /g, '  ')))
+let info = str => {
+  log(chalk.green(str))
+}
+let cyan = str => {
+  log(chalk.cyan(str))
+}
+let err = str => {
+  log(chalk.red(str))
+}
+let fig = str => {
+  cyan(figlet.textSync(str.replace(/ /g, '  ')))
+}
 
 // What is the URL for the results page?
 let searchUrl = 'http://www.pcso.gov.ph/SearchLottoResult.aspx'
@@ -20,10 +32,10 @@ let headers = {
 
 fig('LOTTO SCRAPER PH NODEJS')
 
-log('Create our in memory connection')
+info('Create our in memory connection')
 const dbPromise = sqlite.open(':memory:', { Promise })
 
-log('Loading hidden fields on results page')
+info('Loading hidden fields on results page')
 
 // Load the first page so that we can get the hidden field
 request.get(
@@ -31,10 +43,10 @@ request.get(
     url: searchUrl,
     headers: headers
   },
-  async (err, httpResponse, body) => {
-    if (err) {
+  async (e, httpResponse, body) => {
+    if (e) {
       fig('Error')
-      log(err)
+      err(e)
       return
     }
 
@@ -48,11 +60,11 @@ request.get(
     let formData = {}
 
     // Parse the hidden document
-    log('Parse the hidden document')
+    info('Parse the hidden document')
     let hiddenDocument = (new JSDOM(body)).window.document
 
     // Parse the hidden fields
-    log('Parse the hidden fields')
+    info('Parse the hidden fields')
     let fields = hiddenDocument.querySelectorAll('form#mainform input[type=hidden]')
 
     // Loop the found fields
@@ -74,7 +86,7 @@ request.get(
     let requestBody = qs.stringify(formData)
 
     // Load the PSCO results page
-    log('Loading results page')
+    info('Loading results page')
     request.post(
       {
         url: searchUrl,
@@ -85,27 +97,27 @@ request.get(
           'Content-Type': 'application/x-www-form-urlencoded'
         }
       },
-      async (err, httpResponse, body) => {
-        if (err) {
+      async (e, httpResponse, body) => {
+        if (e) {
           fig('Error')
-          log(err)
+          err(e)
           return
         }
 
         // Page loaded, nice
-        log('Results page loaded')
+        info('Results page loaded')
 
         // Parse the document
-        log('Parsing the document')
+        info('Parsing the document')
         let document = (new JSDOM(body)).window.document
 
         // Load the results
-        log('Parsing the result rows')
+        info('Parsing the result rows')
         let results = document.querySelectorAll('#cphContainer_cpContent_GridView1 tr td')
         let resultsCount = results.length / 5
 
         // Log some debug counts
-        log('Found ' + resultsCount + ' results')
+        info('Found ' + resultsCount + ' results')
 
         // Loop the results
         for (let i = 0, len = resultsCount; i < len; i++) {
@@ -123,19 +135,21 @@ request.get(
 
           // Add to DB
           let res = await db.run(
-            'INSERT INTO results ( game, stamp, prize, winners) VALUES ( $game, $stamp, $prize, $winners)',
+            'INSERT INTO results ( game, numbers, stamp, prize, winners) VALUES ( $game, $numbers, $stamp, $prize, $winners)',
             {
               $game: result.game,
+              $numbers: result.numbers.length,
               $stamp: result.stamp,
               $prize: result.prize,
               $winners: result.winners
             })
 
-          let stmt = await db.prepare('INSERT INTO numbers (result_id, value) VALUES ($result_id, $value)')
+          let stmt = await db.prepare('INSERT INTO numbers (result_id, game, value) VALUES ($result_id, $game, $value)')
 
           for (let i = 0, len = result.numbers.length; i < len; i++) {
             stmt.run({
               $result_id: res.lastID,
+              $game: result.game,
               $value: result.numbers[i]
             })
           }
@@ -147,13 +161,61 @@ request.get(
         let res = await db.get('SELECT COUNT(id) AS count FROM results')
 
         // We got them all!
-        log('Saved ' + res.count + ' results')
+        info('Saved ' + res.count + ' results')
 
         // Query all games
-        let games = await db.all('SELECT game FROM results GROUP BY game')
+        let games = await db.all('SELECT game AS name, numbers FROM results GROUP BY game')
 
-        log(games)
+        // We need some data for our table
+        let rows = [
+          ['Game', 'Least Common', 'Most Common']
+        ]
 
+        for (let i = 0, len = games.length; i < len; i++) {
+          // Load game data
+          let game = games[i]
+
+          game.least = (await db.all(
+            `
+              SELECT value, COUNT(id) AS count
+              FROM numbers
+              WHERE game = ?
+              GROUP BY value
+              ORDER BY count ASC
+              LIMIT ?
+            `,
+            game.name,
+            game.numbers
+          )).map(num => {
+            return String(num.value).padStart(2, '0')
+          }).join('-')
+          game.most = (await db.all(
+            `
+              SELECT value, COUNT(id) AS count
+              FROM numbers
+              WHERE game = ?
+              GROUP BY value
+              ORDER BY count DESC
+              LIMIT ?
+            `,
+            game.name,
+            game.numbers
+          )).map(num => {
+            return String(num.value).padStart(2, '0')
+          }).join('-')
+
+          // Add our row
+          rows.push([
+            chalk.red(game.name),
+            chalk.keyword('orange')(game.least),
+            chalk.keyword('orange')(game.most)
+          ])
+        }
+
+        // Log the games
+        cyan(table(rows))
+
+        // PENISH NA!
         fig('DONE')
       }
     )
