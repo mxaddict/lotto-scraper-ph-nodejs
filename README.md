@@ -21,6 +21,10 @@ cd lotto-scraper-ph-nodejs
 ./run
 ```
 
+## Sample Output
+
+![Lotto Scaper Sample Output](/sample.png?raw=true "Lotto Scaper Sample Output")
+
 ## Why?
 Cause [jefjabs](https://github.com/jefjabs) made a GoLang
 version over here: [lotto-scraper-ph](https://github.com/jefjabs/lotto-scraper-ph)
