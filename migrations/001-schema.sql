@@ -2,7 +2,7 @@ CREATE TABLE results (
   id INTEGER PRIMARY KEY,
   game VARCHAR,
   numbers INTEGER,
-  stamp TIMESTAMP,
+  stamp DATETIME,
   prize INTEGER,
   winners INTEGER
 );

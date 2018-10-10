@@ -13,7 +13,8 @@ const { table } = require('table')
 // Load our arguments
 const argv = require('yargs')
   .default({
-    days: 60,
+    days: 30,
+    intervals: 12,
     split: false
   })
   .argv
@@ -82,7 +83,7 @@ request.get(
     }
 
     // Start
-    let start = moment().subtract(argv.days, 'days')
+    let start = moment().subtract(argv.days * argv.intervals, 'days')
 
     // End
     let end = moment()
@@ -143,9 +144,29 @@ request.get(
           let result = {
             game: results[x + 0].innerHTML,
             numbers: results[x + 1].innerHTML.split('-').sort().map(s => { return parseInt(s) }),
-            stamp: results[x + 2].innerHTML,
+            stamp: moment(results[x + 2].innerHTML, 'MM-DD-YYYY'),
             prize: parseInt(results[x + 3].innerHTML),
             winners: parseInt(results[x + 4].innerHTML)
+          }
+
+          // Load the matches
+          let matches = result.game.match(/[\d]+[AMP]+/)
+
+          // Add time for timestamp
+          if (matches !== null) {
+            switch (matches[0]) {
+            case '11AM':
+              result.stamp = result.stamp.add(11, 'hours')
+              break
+
+            case '4PM':
+              result.stamp = result.stamp.add(16, 'hours')
+              break
+
+            case '9PM':
+              result.stamp = result.stamp.add(21, 'hours')
+              break
+            }
           }
 
           // Check if we wanna split the time based games?
@@ -159,7 +180,7 @@ request.get(
             {
               $game: result.game,
               $numbers: result.numbers.length,
-              $stamp: result.stamp,
+              $stamp: result.stamp.format(),
               $prize: result.prize,
               $winners: result.winners
             })
@@ -237,6 +258,12 @@ request.get(
             chalk.yellow(game.most)
           ])
         }
+
+        // log(await db.all('SELECT * FROM results WHERE numbers = 3 LIMIT 2'))
+
+        // log(moment('2018-01-01 11:00').format())
+
+        // log(await db.all('SELECT * FROM results WHERE stamp >= "' + moment('2018-10-01T11').format() + '" AND numbers = 3 LIMIT 10'))
 
         // Log the games
         cyan(table(rows))
