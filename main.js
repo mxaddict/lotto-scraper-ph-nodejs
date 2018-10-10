@@ -3,11 +3,19 @@
 // Load dependencies
 const chalk = require('chalk')
 const figlet = require('figlet')
+const moment = require('moment')
 const qs = require('querystring')
 const request = require('request')
 const sqlite = require('sqlite')
-const { table } = require('table')
 const { JSDOM } = require('jsdom')
+const { table } = require('table')
+
+// Load our arguments
+const argv = require('yargs')
+  .default({
+    days: 60
+  })
+  .argv
 
 // We need an easy way to use the console.log command
 let log = console.log
@@ -72,13 +80,19 @@ request.get(
       formData[fields[i].name] = fields[i].value
     }
 
+    // Start
+    let start = moment().subtract(argv.days, 'days')
+
+    // End
+    let end = moment()
+
     // Form data for our main request date filter
-    formData['ctl00$ctl00$cphContainer$cpContent$ddlStartMonth'] = (new Date()).toLocaleString('en-us', { month: 'long' })
-    formData['ctl00$ctl00$cphContainer$cpContent$ddlStartDate'] = (new Date()).getDate()
-    formData['ctl00$ctl00$cphContainer$cpContent$ddlStartYear'] = ((new Date()).getFullYear() - 2)
-    formData['ctl00$ctl00$cphContainer$cpContent$ddlEndMonth'] = (new Date()).toLocaleString('en-us', { month: 'long' })
-    formData['ctl00$ctl00$cphContainer$cpContent$ddlEndDay'] = (new Date()).getDate()
-    formData['ctl00$ctl00$cphContainer$cpContent$ddlEndYear'] = (new Date()).getFullYear()
+    formData['ctl00$ctl00$cphContainer$cpContent$ddlStartMonth'] = start.format('MMMM')
+    formData['ctl00$ctl00$cphContainer$cpContent$ddlStartDate'] = start.format('DD')
+    formData['ctl00$ctl00$cphContainer$cpContent$ddlStartYear'] = start.format('YYYY')
+    formData['ctl00$ctl00$cphContainer$cpContent$ddlEndMonth'] = end.format('MMMM')
+    formData['ctl00$ctl00$cphContainer$cpContent$ddlEndDate'] = end.format('DD')
+    formData['ctl00$ctl00$cphContainer$cpContent$ddlEndYear'] = end.format('YYYY')
     formData['ctl00$ctl00$cphContainer$cpContent$ddlSelectGame'] = 0
     formData['ctl00$ctl00$cphContainer$cpContent$btnSearch'] = 'Search Lotto'
 
