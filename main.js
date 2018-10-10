@@ -14,7 +14,7 @@ let fig    = (string) =>
   log(_figlet.textSync(string.replace(/ /g, '  ')))
 
 // What is the URL for the results page?
-let results_url     = 'http://www.pcso.gov.ph/lotto-search/lotto-search.aspx';
+let results_url     = 'http://www.pcso.gov.ph/SearchLottoResult.aspx';
 let request_headers = {
   'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/58.0.3029.81 Chrome/58.0.3029.81 Safari/537.36'
 }
@@ -34,7 +34,7 @@ _request.get(
     url: results_url,
     headers: request_headers
   },
-  function(err, httpResponse, body){
+  function(err, httpResponse, body) {
     if (err) {
       fig("Error");
       log(err);
@@ -50,7 +50,7 @@ _request.get(
 
     // Load the results
     log("Parse the hidden fields");
-    let fields = hidden_document.querySelectorAll('form input[type=hidden]');
+    let fields = hidden_document.querySelectorAll('form#mainform input[type=hidden]');
 
     // Loop the found fields
     for (var i = 0, len = fields.length; i < len; i++) {
@@ -58,14 +58,14 @@ _request.get(
     }
 
     // Form data for our main request date filter
-    form_data.ddlStartMonth = (new Date).toLocaleString("en-us", { month: "long" });
-    form_data.ddlStartDate  = (new Date).getDate();
-    form_data.ddlStartYear  = ((new Date).getFullYear() - 2);
-    form_data.ddlEndMonth   = (new Date).toLocaleString("en-us", { month: "long" });
-    form_data.ddlEndDay     = (new Date).getDate();
-    form_data.ddlEndYear    = (new Date).getFullYear();
-    form_data.ddlSelectGame = 0;
-    form_data.btnSearch     = 'Search Lotto';
+    form_data['ctl00$ctl00$cphContainer$cpContent$ddlStartMonth'] = (new Date).toLocaleString("en-us", { month: "long" });
+    form_data['ctl00$ctl00$cphContainer$cpContent$ddlStartDate']  = (new Date).getDate();
+    form_data['ctl00$ctl00$cphContainer$cpContent$ddlStartYear']  = ((new Date).getFullYear() - 2);
+    form_data['ctl00$ctl00$cphContainer$cpContent$ddlEndMonth']   = (new Date).toLocaleString("en-us", { month: "long" });
+    form_data['ctl00$ctl00$cphContainer$cpContent$ddlEndDay']     = (new Date).getDate();
+    form_data['ctl00$ctl00$cphContainer$cpContent$ddlEndYear']    = (new Date).getFullYear();
+    form_data['ctl00$ctl00$cphContainer$cpContent$ddlSelectGame'] = 0;
+    form_data['ctl00$ctl00$cphContainer$cpContent$btnSearch']     = 'Search Lotto';
 
     // Build the request_body
     let request_body = _qs.stringify(form_data)
@@ -74,7 +74,7 @@ _request.get(
     log("Loading results page");
     _request.post(
       {
-        url:'http://www.pcso.gov.ph/lotto-search/lotto-search.aspx',
+        url: results_url,
         body: request_body,
         headers: {
           'User-Agent':     request_headers['User-Agent'],
@@ -97,7 +97,7 @@ _request.get(
 
         // Load the results
         log("Parse the result rows");
-        let results = document.querySelectorAll('#GridView1 tr td');
+        let results = document.querySelectorAll('#cphContainer_cpContent_GridView1 tr td');
         let results_count = results.length / 5;
 
         // Temp result
